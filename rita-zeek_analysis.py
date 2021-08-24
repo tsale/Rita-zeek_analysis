@@ -9,8 +9,8 @@ def args():
     global datasetname
     parser = argparse.ArgumentParser()
     parser.add_argument("-i","--install", help="[*] Install Rita/Zeek/MongoDB for Ubuntu 20.4",required=False, action="store_true")
-    parser.add_argument("-a","--analyze", help="[*] Convert PCAPCs to zeek logs and analyze with rita ",required=False, action="store_true")
-    parser.add_argument("-d","--datasetname", help="[*] Name of this rita import (Dataset name)")
+    parser.add_argument("-a","--analyze", help="[*] Convert PCAPs to zeek logs and analyze with rita ",required=False, action="store_true")
+    parser.add_argument("-d","--datasetname", help="[*] Dataset name of the rita import (Dataset name)")
     args = parser.parse_args()
     install = args.install
     analyze = args.analyze
