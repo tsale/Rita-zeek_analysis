@@ -1,7 +1,7 @@
 import subprocess
 import os
 import argparse
-
+import time
 
 def args():
     global install
@@ -10,11 +10,13 @@ def args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i","--install", help="[*] Install Rita/Zeek/MongoDB for Ubuntu 20.4",required=False, action="store_true")
     parser.add_argument("-a","--analyze", help="[*] Convert PCAPs to zeek logs and analyze with rita ",required=False, action="store_true")
-    parser.add_argument("-d","--datasetname", help="[*] Dataset name of the rita import (Dataset name)")
+    parser.add_argument("-d","--datasetname", help="[*] Dataset name of the rita import (Dataset name) [Required if you are using the script for analysis]")
     args = parser.parse_args()
     install = args.install
     analyze = args.analyze
     datasetname = args.datasetname
+
+
 
 def install_all():
   #Setup Rita-Zeek-mongodb on Ubuntu 20.4
@@ -28,10 +30,12 @@ def install_all():
   #  # Install and configure MongoDB (you also have to install and configure docker if you haven't already)
   subprocess.call("apt-get install docker.io -y", shell=True)
   subprocess.call("apt-get install wireshark-common -y", shell=True) # Installing mergecap
-  subprocess.call("docker run -d --name MongoDB mongo:4.2", shell=True)
+  subprocess.call("""docker run -d --name MongoDB mongo:4.2", shell=True)
   print("[*] You will now have 	to edit /etc/rita/config.yaml \
 to add the IP of the MongoDB container. You can view the IP \
-by typing: sudo docker inspect MongoDB")
+by typing: sudo docker inspect MongoDB |grep '"IPAddress"'""")
+
+
 
 def merge(dir_name):
   # Using mergecap to merge PCAPs. You should install it if you don't have it installed already.
@@ -39,16 +43,23 @@ def merge(dir_name):
     print(f"Merging all PCAPs in {dir_name} to merge.pcap...") 
     subprocess.call(f"mergecap -w merged.pcap {dir_name}/*.pcap", shell=True)
 
+
+
 def analyze_pcaps(dbname,dir_name):
   print("\n\t[*] Converting merged PCAP to zeek logs...\n")
   subprocess.call(f"""zeek -r {dir_name}/*.pcap local "Log::default_rotation_interval = 1 day"
     """, shell=True)
+  print("\nStarting MongoDB in case it is not running...")
+  subprocess.call(f"docker start MongoDB",shell=True)
+  time.sleep(5)
+
   print("\t[*] Analyzing zeek logs with RITA...\n")
   subprocess.call(f"rita import {dir_name}/*.log {dbname}",shell=True)
-  
   print("\t[*] Exporting RITA results to HTML report... \n")
   subprocess.call(f"rita html-report {dbname}", shell=True)
   print("\n[*] DONE!")
+
+
 
 if __name__ == '__main__':
   args()
